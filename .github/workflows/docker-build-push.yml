@@ -1,31 +1,33 @@
-name: Docker Build and Push
- 
+name: Docker Image CI
+
 on:
   push:
-    branches: [ main ]  # 触发分支，可以根据需要修改
+    branches: [ "main" ] # 触发条件，例如推送到主分支
+    tags: ['v*'] # 或者，推送到带有 v 开头的 tag
   pull_request:
-    branches: [ main ] # 同上，可以根据需要修改
- 
+    branches: [ "main" ]
+
 jobs:
+
   build:
+
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-      
+    - uses: actions/checkout@v4 # 检出代码
+
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-      
-    - name: Login to DockerHub
-      uses: docker/login-action@v1 
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
       with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }} # Docker Hub 用户名
-        password: ${{ secrets.DOCKERHUB_TOKEN }}   # Docker Hub 访问令牌（不是密码）
-        
-    - name: Build and push
-      uses: docker/build-push-action@v2
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
       with:
-        context: . # Dockerfile 的路径，默认为当前目录。如果有特定路径，请修改这里。
-        file: ./Dockerfile # Dockerfile 的名称，如果与默认文件名相同可以省略。
-        push: true # 是否推送到 Docker Hub，默认为 false。
-        tags: yourusername/yourimage:latest # 你的 Docker Hub 用户名和镜像名及标签。
+        context: .
+        push: true
+        tags: ${{ secrets.DOCKER_REGISTRY }}:${{ github.ref_name }} # 使用 tag 作为镜像 tag
